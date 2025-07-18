@@ -1,4 +1,4 @@
-/* Custom Koosi Styles */
+/* Koosi Brand Styles */
 body {
   margin: 0;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -9,21 +9,37 @@ body {
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
-/* Custom Button Styles */
+/* Koosi Custom Button Styles */
 .btn-primary {
-  @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5;
+  @apply bg-gradient-to-r from-koosi-orange to-koosi-yellow hover:from-koosi-500 hover:to-accent-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5;
 }
 
 .btn-secondary {
-  @apply bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium py-3 px-6 rounded-lg transition-all duration-200 border border-gray-300 hover:border-gray-400;
+  @apply bg-gradient-to-r from-koosi-lightblue to-koosi-blue hover:from-secondary-400 hover:to-secondary-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl;
+}
+
+.btn-outline {
+  @apply border-2 border-gradient-to-r from-koosi-orange to-koosi-blue bg-transparent hover:bg-gradient-to-r hover:from-koosi-orange hover:to-koosi-blue text-koosi-orange hover:text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300;
 }
 
 .card {
-  @apply bg-white rounded-xl shadow-lg border border-gray-100 p-6 transition-all duration-200 hover:shadow-xl;
+  @apply bg-white rounded-xl shadow-lg border border-gray-100 p-6 transition-all duration-300 hover:shadow-2xl hover:scale-105;
+}
+
+/* Koosi Gradient Text */
+.gradient-text {
+  @apply text-transparent bg-clip-text bg-gradient-to-r from-koosi-orange via-koosi-yellow to-koosi-blue;
+}
+
+.gradient-text-orange {
+  @apply text-transparent bg-clip-text bg-gradient-to-r from-koosi-orange to-koosi-yellow;
+}
+
+.gradient-text-blue {
+  @apply text-transparent bg-clip-text bg-gradient-to-r from-koosi-lightblue to-koosi-blue;
 }
 
 /* Custom animations */
@@ -32,8 +48,32 @@ code {
   50% { transform: translateY(-10px); }
 }
 
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(255, 107, 53, 0.3); }
+  50% { box-shadow: 0 0 30px rgba(255, 107, 53, 0.6); }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 .float-animation {
   animation: float 3s ease-in-out infinite;
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.gradient-shift {
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
 }
 
 @keyframes fadeInUp {
@@ -45,8 +85,4 @@ code {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.fade-in-up {
-  animation: fadeInUp 0.6s ease-out forwards;
 }

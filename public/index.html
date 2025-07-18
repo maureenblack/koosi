@@ -2,17 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <link rel="icon" href="%PUBLIC_URL%/images/koosi-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#2D1B69" />
     <meta name="description" content="Koosi - Digital Time Capsules for Life's Perfect Moments" />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/images/koosi-icon.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -21,28 +21,81 @@
         theme: {
           extend: {
             colors: {
+              koosi: {
+                // Main brand colors from logo
+                orange: '#FF6B35',
+                yellow: '#FFB800', 
+                amber: '#FFA726',
+                lightblue: '#4FC3F7',
+                blue: '#2196F3',
+                accent: '#FF5722',
+                purple: '#2D1B69',
+                white: '#FFFFFF',
+                // Extended palette
+                50: '#fff7ed',
+                100: '#ffedd5',
+                200: '#fed7aa',
+                300: '#fdba74',
+                400: '#fb923c',
+                500: '#FF6B35',
+                600: '#ea580c',
+                700: '#c2410c',
+                800: '#9a3412',
+                900: '#7c2d12',
+              },
               primary: {
-                50: '#f0f9ff',
-                100: '#e0f2fe',
-                200: '#bae6fd',
-                300: '#7dd3fc',
-                400: '#38bdf8',
-                500: '#0ea5e9',
-                600: '#0284c7',
-                700: '#0369a1',
-                800: '#075985',
-                900: '#0c4a6e',
+                50: '#fff7ed',
+                100: '#ffedd5',
+                200: '#fed7aa', 
+                300: '#fdba74',
+                400: '#fb923c',
+                500: '#FF6B35', // Koosi Orange
+                600: '#ea580c',
+                700: '#c2410c',
+                800: '#9a3412',
+                900: '#7c2d12',
+              },
+              secondary: {
+                50: '#e3f2fd',
+                100: '#bbdefb',
+                200: '#90caf9',
+                300: '#64b5f6',
+                400: '#42a5f5',
+                500: '#2196F3', // Koosi Blue
+                600: '#1e88e5',
+                700: '#1976d2',
+                800: '#1565c0',
+                900: '#0d47a1',
+              },
+              accent: {
+                50: '#fff3e0',
+                100: '#ffe0b2',
+                200: '#ffcc80',
+                300: '#ffb74d',
+                400: '#ffa726',
+                500: '#FFB800', // Koosi Yellow
+                600: '#ffb300',
+                700: '#ffa000',
+                800: '#ff8f00',
+                900: '#ff6f00',
               }
             },
             fontFamily: {
               'sans': ['Inter', 'system-ui', 'sans-serif'],
             },
+            backgroundImage: {
+              'koosi-gradient': 'linear-gradient(135deg, #FF6B35 0%, #FFB800 25%, #4FC3F7 75%, #2196F3 100%)',
+              'koosi-orange': 'linear-gradient(135deg, #FF6B35 0%, #FFB800 100%)',
+              'koosi-blue': 'linear-gradient(135deg, #4FC3F7 0%, #2196F3 100%)',
+              'koosi-text': 'linear-gradient(135deg, #FF6B35 0%, #FFB800 50%, #2196F3 100%)',
+              'koosi-bg': 'linear-gradient(135deg, #2D1B69 0%, #1a1040 100%)',
+            }
           }
         }
       }
     </script>
     
-    <title>Koosi</title>
+    <title>Koosi - Digital Time Capsules</title>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
