@@ -1,46 +1,113 @@
-# Getting Started with Create React App
+# 🌟 Koosi - Digital Time Capsules for Life's Perfect Moments
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![React](https://img.shields.io/badge/React-19.1-blue.svg)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-4.9-blue.svg)](https://www.typescriptlang.org/)
+[![Cardano](https://img.shields.io/badge/Cardano-Blockchain-blue.svg)](https://cardano.org/)
 
-## Available Scripts
+> *"Because timing isn't just everything - it's the only thing that turns a message into a moment."*
 
-In the project directory, you can run:
+## 🚀 Overview
 
-### `npm start`
+Koosi (meaning "remember" in Cameroonian Limbum) is an open-source platform for creating blockchain-powered digital time capsules that unlock based on real-world conditions. Unlike simple scheduled messages, Koosi enables truly smart triggers that respond to life events, relationship milestones, and group consensus.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### ✨ Key Features
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+- **Smart Triggers**: Messages that respond to real-life events, not just dates
+- **Group Coordination**: Multi-party consensus for message release
+- **Emergency Protocols**: Dead man's switch and backup release mechanisms
+- **Privacy First**: End-to-end encryption and selective sharing
+- **Beautiful UI**: Immersive 3D visualization and smooth animations
 
-### `npm test`
+## 🛠️ Tech Stack
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- **Frontend**: React 19.1, TypeScript 4.9
+- **3D Graphics**: Three.js, React Three Fiber
+- **Animation**: Framer Motion
+- **Styling**: Bootstrap 5.3
+- **Blockchain**: Cardano (planned)
+- **Enterprise Integration**: Hyperledger Firefly (planned)
+- **Storage**: IPFS (planned)
 
-### `npm run build`
+## 🚀 Getting Started
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Prerequisites
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+npm version 8.0.0 or higher
+Node.js 16.0.0 or higher
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Installation
 
-### `npm run eject`
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/koosi.git
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+# Navigate to project directory
+cd koosi
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+# Install dependencies
+npm install
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+# Start development server
+npm start
+```
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## 🤝 Contributing
 
-## Learn More
+We love contributions! Here's how you can help:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and development process.
+
+## 📝 Documentation
+
+- [Technical Architecture](docs/ARCHITECTURE.md)
+- [API Reference](docs/API.md)
+- [Smart Contract Specification](docs/SMART_CONTRACTS.md)
+
+## 🎯 Roadmap
+
+### v1.0 - Foundation (Current)
+- ✅ Core message creation and storage
+- ✅ Basic time-based triggers
+- ✅ Group coordination features
+- ✅ Beautiful 3D visualization
+- 🚧 Dead man's switch
+
+### v2.0 - Smart Verification
+- 🔲 External API integrations
+- 🔲 Social media verification
+- 🔲 Educational platform integration
+- 🔲 Professional network triggers
+
+### v3.0 - Ecosystem Platform
+- 🔲 Developer APIs
+- 🔲 Community marketplace
+- 🔲 AI-powered timing suggestions
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 💖 Acknowledgments
+
+- Inspired by family stories and the need to preserve generational wisdom
+- Built on the shoulders of amazing open-source projects
+- Made possible by the incredible blockchain community
+
+## 🌐 Links
+
+- [Website](https://koosi.io)
+- [Documentation](https://docs.koosi.io)
+- [Community Discord](https://discord.gg/koosi)
+
+---
+
+<p align="center">Made with ❤️ for preserving life's perfect moments</p>
