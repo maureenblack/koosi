@@ -75,7 +75,7 @@ const Hero = () => {
   return (
     <section 
       ref={containerRef}
-      className="relative min-h-screen flex items-center overflow-hidden"
+      className="w-full min-h-screen relative flex flex-col items-center justify-center overflow-hidden bg-[#1A0B4A]"
       style={{
         background: `
           radial-gradient(circle at ${mousePosition.x * 100}% ${mousePosition.y * 100}%, 
@@ -86,10 +86,11 @@ const Hero = () => {
         `
       }}
     >
-      {/* 3D Scene */}
-      <Suspense fallback={null}>
-        <Scene3D />
-      </Suspense>
+      <div className="absolute inset-0 w-full h-full">
+        <Suspense fallback={null}>
+          <Scene3D />
+        </Suspense>
+      </div>
 
       {/* Dynamic Mesh Gradient */}
       <motion.div
@@ -133,10 +134,11 @@ const Hero = () => {
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 z-10">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-16">
           
           {/* Left Side - Enhanced Content */}
           <motion.div
+            className="flex-1 w-full lg:max-w-2xl"
             initial={{ opacity: 0, x: -100 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 1, ease: "easeOut" }}
@@ -287,7 +289,7 @@ const Hero = () => {
 
           {/* Right Side - Interactive Demo with 3D Effects */}
           <motion.div
-            className="relative z-20"
+            className="relative z-20 flex-1 w-full lg:max-w-2xl"
             initial={{ opacity: 0, x: 100, rotateY: -15 }}
             animate={{ opacity: 1, x: 0, rotateY: 0 }}
             transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}

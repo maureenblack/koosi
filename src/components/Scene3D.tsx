@@ -1,8 +1,20 @@
 import React, { useRef, useMemo, useState } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, Stars, Text, useGLTF, Plane } from '@react-three/drei';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls, Text, Plane } from '@react-three/drei';
 import * as THREE from 'three';
-import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
+
+// Performance optimization: Pre-create geometries and materials
+const crystalGeometry = new THREE.OctahedronGeometry(1, 0);
+const particleGeometry = new THREE.SphereGeometry(0.05, 8, 8);
+const butterflyWingGeometry = new THREE.PlaneGeometry(0.4, 0.3);
+const butterflyBodyGeometry = new THREE.BoxGeometry(0.1, 0.3, 0.1);
+const glowMaterial = new THREE.MeshBasicMaterial({ color: '#FFB800', transparent: true, opacity: 0.1 });
+const particleMaterial = new THREE.MeshStandardMaterial({ 
+  color: '#FFB800', 
+  emissive: '#FF6B00', 
+  emissiveIntensity: 2,
+  toneMapped: false // Better performance
+});
 
 function Silhouette({ position }: { position: [number, number, number] }) {
   return (
@@ -111,9 +123,19 @@ function Butterfly({ position, color }: { position: [number, number, number], co
   );
 }
 
+const crystalMaterial = new THREE.MeshPhysicalMaterial({
+  color: '#FFB800',
+  transmission: 0.6,
+  roughness: 0.1,
+  metalness: 0.5,
+  clearcoat: 1,
+  clearcoatRoughness: 0.1,
+  opacity: 0.8,
+  transparent: true
+});
+
 function Crystal({ position }: { position: [number, number, number] }) {
   const mesh = useRef<THREE.Mesh>(null);
-  const crystalGeometry = useMemo(() => new THREE.OctahedronGeometry(1, 0), []);
 
   useFrame((state) => {
     if (mesh.current) {
@@ -123,19 +145,14 @@ function Crystal({ position }: { position: [number, number, number] }) {
   });
 
   return (
-    <mesh ref={mesh} position={position} castShadow receiveShadow>
-      <primitive object={crystalGeometry} />
-      <meshPhysicalMaterial
-        color="#FFB800"
-        transmission={0.6}
-        roughness={0.1}
-        metalness={0.5}
-        clearcoat={1}
-        clearcoatRoughness={0.1}
-        opacity={0.8}
-        transparent
-      />
-    </mesh>
+    <mesh 
+      ref={mesh} 
+      position={position} 
+      castShadow 
+      receiveShadow
+      geometry={crystalGeometry}
+      material={crystalMaterial}
+    />
   );
 }
 
@@ -185,21 +202,25 @@ function FloatingParticle({ basePosition }: { basePosition: [number, number, num
   });
 
   return (
-    <mesh ref={mesh} position={basePosition}>
-      <sphereGeometry args={[0.05, 16, 16]} />
-      <meshStandardMaterial
-        color="#FFB800"
-        emissive="#FF6B00"
-        emissiveIntensity={2}
-      />
-    </mesh>
+    <mesh 
+      ref={mesh} 
+      position={basePosition}
+      geometry={particleGeometry}
+      material={particleMaterial}
+    />
   );
 }
 
-function Scene3D() {
+const Scene3D = React.memo(function Scene3D() {
   const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
   const [showMessage, setShowMessage] = React.useState(true);
   const [transformationProgress, setTransformationProgress] = React.useState(0);
+  
+  // Memoize camera position
+  const cameraProps = useMemo(() => ({
+    position: isMobile ? [6, 3, 6] as [number, number, number] : [8, 4, 8] as [number, number, number],
+    fov: isMobile ? 60 : 50
+  }), [isMobile]);
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -245,32 +266,30 @@ function Scene3D() {
     return () => clearInterval(interval);
   }, []);
 
+  // Memoize container style
+  const containerStyle = useMemo(() => ({
+    width: '100%',
+    height: isMobile ? '60vh' : '80vh',
+    background: 'linear-gradient(135deg, #1A0B4A 0%, #2D1B69 50%, #1A0B4A 100%)',
+    overflow: 'hidden',
+    position: 'relative' as const,
+  }), [isMobile]);
+
   return (
-    <div 
-      style={{ 
-        width: '100%', 
-        height: window.innerWidth <= 768 ? '60vh' : '80vh',
-        background: 'linear-gradient(135deg, #1A0B4A 0%, #2D1B69 50%, #1A0B4A 100%)',
-        overflow: 'hidden',
-        position: 'relative',
-      }}
-    >
+    <div style={containerStyle}>
       <Canvas 
-        camera={{ 
-          position: isMobile ? [6, 3, 6] : [8, 4, 8], 
-          fov: isMobile ? 60 : 50 
-        }}
+        camera={cameraProps}
         style={{ cursor: 'grab' }}
         shadows
+        dpr={[1, 2]} // Limit pixel ratio for better performance
+        performance={{ min: 0.5 }} // Allow frame rate to drop for better performance
+        frameloop="demand" // Only render when needed
+        gl={{ 
+          antialias: false, // Disable antialiasing for better performance
+          powerPreference: 'high-performance'
+        }}
       >
-        <Stars 
-          radius={100} 
-          depth={50} 
-          count={3000} 
-          factor={4} 
-          saturation={0} 
-          fade 
-        />
+        {/* Removed Stars component for better performance */}
         <ambientLight intensity={0.2} />
         <spotLight 
           position={[10, 10, 10]} 
@@ -306,6 +325,6 @@ function Scene3D() {
       </Canvas>
     </div>
   );
-}
+});
 
 export default Scene3D;
