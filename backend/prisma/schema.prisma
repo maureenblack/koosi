@@ -1,0 +1,102 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String
+  walletAddress String?   @unique
+  password      String?
+  googleId      String?   @unique
+  githubId      String?   @unique
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  capsules      Capsule[]
+  memberships   ConsensusGroupMember[]
+
+  @@index([email])
+}
+
+model Capsule {
+  id          String    @id @default(uuid())
+  userId      String
+  content     String    // Encrypted content
+  triggerType String    // time, event, consensus
+  conditions  Json      // Trigger conditions
+  status      String    @default("sealed") // sealed, partially_unsealed, unsealed, expired
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  creator     User      @relation(fields: [userId], references: [id])
+  trigger     Trigger?
+  consensus   ConsensusGroup?
+  recipients  CapsuleRecipient[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model CapsuleRecipient {
+  id        String   @id @default(uuid())
+  capsuleId String
+  email     String
+  status    String   @default("pending") // pending, accepted, rejected
+  createdAt DateTime @default(now())
+  capsule   Capsule  @relation(fields: [capsuleId], references: [id])
+
+  @@unique([capsuleId, email])
+  @@index([email])
+}
+
+model Trigger {
+  id        String   @id @default(uuid())
+  capsuleId String   @unique
+  type      String   // time, event, consensus
+  conditions Json
+  status    String   @default("pending") // pending, active, completed, failed
+  evidence  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  capsule   Capsule  @relation(fields: [capsuleId], references: [id])
+
+  @@index([status])
+}
+
+model ConsensusGroup {
+  id        String    @id @default(uuid())
+  capsuleId String    @unique
+  threshold Int
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  capsule   Capsule   @relation(fields: [capsuleId], references: [id])
+  members   ConsensusGroupMember[]
+
+  @@index([capsuleId])
+}
+
+model ConsensusGroupMember {
+  id        String        @id @default(uuid())
+  groupId   String
+  userId    String
+  vote      String?       // approved, rejected
+  votedAt   DateTime?
+  createdAt DateTime      @default(now())
+  group     ConsensusGroup @relation(fields: [groupId], references: [id])
+  user      User          @relation(fields: [userId], references: [id])
+
+  @@unique([groupId, userId])
+  @@index([userId])
+  @@index([groupId])
+}

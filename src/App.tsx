@@ -1,7 +1,10 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
-import Hero from  './components/Hero';
+import Footer from './components/Footer';
+import Home from './pages/Home';
+import HowItWorks from './pages/HowItWorks';
+import Pricing from './pages/Pricing';
 import './App.css';
 import './index.css';
 import '@fontsource/inter/400.css';
@@ -11,21 +14,16 @@ import '@fontsource/inter/700.css';
 import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
-import Features from './components/Features';
-import Footer from './components/Footer';
 
 function App() {
   return (
     <Router>
-      <div className="min-vh-100 bg-light">
+      <div className="min-h-screen bg-gradient-to-b from-[#1A0B4A] to-[#2D1B69]">
         <Header />
         <Routes>
-          <Route path="/" element={
-            <main>
-              <Hero />
-              <Features />
-            </main>
-          } />
+          <Route path="/" element={<Home />} />
+          <Route path="/how-it-works" element={<HowItWorks />} />
+          <Route path="/pricing" element={<Pricing />} />
         </Routes>
         <Footer />
       </div>
