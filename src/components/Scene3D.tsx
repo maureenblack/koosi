@@ -1,7 +1,115 @@
-import React, { useRef, useMemo } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Stars, Text } from '@react-three/drei';
+import React, { useRef, useMemo, useState } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { OrbitControls, Stars, Text, useGLTF, Plane } from '@react-three/drei';
 import * as THREE from 'three';
+import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
+
+function Silhouette({ position }: { position: [number, number, number] }) {
+  return (
+    <mesh position={position} receiveShadow>
+      <planeGeometry args={[1.5, 3]} />
+      <meshBasicMaterial color="#1A0B4A" transparent opacity={0.8} />
+    </mesh>
+  );
+}
+
+function FloatingMessage({ position, visible, progress = 0 }: { position: [number, number, number], visible: boolean, progress?: number }) {
+  const mesh = useRef<THREE.Group>(null);
+  const glowRef = useRef<THREE.Mesh>(null);
+
+  useFrame((state) => {
+    if (mesh.current && visible) {
+      mesh.current.position.y = position[1] + Math.sin(state.clock.elapsedTime) * 0.1;
+      mesh.current.rotation.z = Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
+    }
+    if (glowRef.current) {
+      glowRef.current.scale.x = 1 + Math.sin(state.clock.elapsedTime * 2) * 0.1;
+      glowRef.current.scale.y = 1 + Math.cos(state.clock.elapsedTime * 2) * 0.1;
+    }
+  });
+
+  return visible ? (
+    <group ref={mesh} position={position}>
+      {/* Glow effect */}
+      <mesh ref={glowRef} position={[0, 0, 0]}>
+        <planeGeometry args={[2.2, 0.7]} />
+        <meshBasicMaterial color="#FFB800" transparent opacity={0.1} />
+      </mesh>
+      {/* Message background */}
+      <Plane args={[2, 0.5]} position={[0, 0, 0.1]}>
+        <meshBasicMaterial color="#FFB800" transparent opacity={0.2} />
+      </Plane>
+      {/* Message text */}
+      <Text
+        position={[0, 0, 0.2]}
+        fontSize={0.2}
+        color="#FFB800"
+        anchorX="center"
+        anchorY="middle"
+        outlineWidth={0.02}
+        outlineColor="#1A0B4A"
+      >
+        Your Future Message
+      </Text>
+      {/* Magical particles */}
+      {Array.from({ length: 5 }).map((_, i) => (
+        <mesh key={i} position={[
+          Math.cos(i * Math.PI * 0.4) * 1.2,
+          Math.sin(i * Math.PI * 0.4) * 0.3,
+          0.1
+        ]}>
+          <sphereGeometry args={[0.03, 8, 8]} />
+          <meshBasicMaterial color="#FFB800" />
+        </mesh>
+      ))}
+    </group>
+  ) : null;
+}
+
+function Butterfly({ position, color }: { position: [number, number, number], color: string }) {
+  const group = useRef<THREE.Group>(null);
+  const wingSpeed = useMemo(() => Math.random() * 0.1 + 0.2, []);
+  const flySpeed = useMemo(() => Math.random() * 0.02 + 0.01, []);
+  const radius = useMemo(() => Math.random() * 2 + 2, []);
+  const heightOffset = useMemo(() => Math.random() * 2, []);
+
+  useFrame((state) => {
+    if (group.current) {
+      const time = state.clock.elapsedTime;
+      group.current.position.x = position[0] + Math.cos(time * flySpeed) * radius;
+      group.current.position.z = position[2] + Math.sin(time * flySpeed) * radius;
+      group.current.position.y = position[1] + heightOffset + Math.sin(time * 0.5) * 0.3;
+      group.current.rotation.y = Math.atan2(
+        Math.cos(time * flySpeed + Math.PI / 2) * radius,
+        Math.sin(time * flySpeed + Math.PI / 2) * radius
+      );
+      // Wing flapping animation
+      if (group.current.children[0]) {
+        group.current.children[0].rotation.y = Math.sin(time * wingSpeed) * 0.5;
+      }
+      if (group.current.children[1]) {
+        group.current.children[1].rotation.y = -Math.sin(time * wingSpeed) * 0.5;
+      }
+    }
+  });
+
+  return (
+    <group ref={group} position={position}>
+      <mesh position={[-0.2, 0, 0]}>
+        <planeGeometry args={[0.4, 0.3]} />
+        <meshBasicMaterial color={color} side={THREE.DoubleSide} transparent opacity={0.8} />
+      </mesh>
+      <mesh position={[0.2, 0, 0]}>
+        <planeGeometry args={[0.4, 0.3]} />
+        <meshBasicMaterial color={color} side={THREE.DoubleSide} transparent opacity={0.8} />
+      </mesh>
+      <mesh position={[0, 0, 0]} scale={[0.1, 0.3, 0.1]}>
+        <boxGeometry />
+        <meshBasicMaterial color={color} />
+      </mesh>
+    </group>
+  );
+}
 
 function Crystal({ position }: { position: [number, number, number] }) {
   const mesh = useRef<THREE.Mesh>(null);
@@ -90,6 +198,8 @@ function FloatingParticle({ basePosition }: { basePosition: [number, number, num
 
 function Scene3D() {
   const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
+  const [showMessage, setShowMessage] = React.useState(true);
+  const [transformationProgress, setTransformationProgress] = React.useState(0);
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -100,12 +210,40 @@ function Scene3D() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setTransformationProgress((prev) => (prev + 0.01) % 1);
+    }, 50);
+    return () => clearInterval(interval);
+  }, []);
+
   const particles = useMemo(() => {
-    const count = isMobile ? 30 : 50;
+    const count = isMobile ? 20 : 30;
     return Array.from({ length: count }, (_, i) => (
-      <FloatingParticle key={i} basePosition={[0, 0, 0]} />
+      <FloatingParticle 
+        key={i} 
+        basePosition={[0.5 + Math.cos(i) * 2, Math.sin(i * 2) * 0.5, 1 + Math.sin(i) * 2]} 
+      />
     ));
   }, [isMobile]);
+
+  const butterflies = useMemo(() => {
+    const count = isMobile ? 3 : 5;
+    return Array.from({ length: count }, (_, i) => (
+      <Butterfly 
+        key={i} 
+        position={[0, 0, 0]} 
+        color={i % 2 === 0 ? '#FFB800' : '#FF6B00'} 
+      />
+    ));
+  }, [isMobile]);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setShowMessage(prev => !prev);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div 
@@ -119,7 +257,7 @@ function Scene3D() {
     >
       <Canvas 
         camera={{ 
-          position: isMobile ? [4, 2, 4] : [5, 3, 5], 
+          position: isMobile ? [6, 3, 6] : [8, 4, 8], 
           fov: isMobile ? 60 : 50 
         }}
         style={{ cursor: 'grab' }}
@@ -141,12 +279,19 @@ function Scene3D() {
           intensity={2} 
           castShadow
         />
-        <group scale={window.innerWidth <= 768 ? 0.6 : 1}>
-          <Crystal position={[0, 0, 0]} />
+        <group scale={window.innerWidth <= 768 ? 0.6 : 1} rotation={[0, -Math.PI / 6, 0]}>
+          {/* Person Silhouette */}
+          <Silhouette position={[-3, 0, -1]} />
+          {/* Floating Message */}
+          <FloatingMessage position={[-1.5, 0.5, 0]} visible={showMessage} />
+          {/* Crystal */}
+          <Crystal position={[0.5, 0, 1]} />
           {/* Trigger Symbols */}
-          <FloatingSymbol position={[1.5, 0, 0]} symbol="🎓" color="#FFB800" rotationSpeed={0.8} />
-          <FloatingSymbol position={[-1.5, 0, 0]} symbol="💍" color="#FF6B00" rotationSpeed={1} />
-          <FloatingSymbol position={[0, 1.5, 0]} symbol="🎂" color="#FFB800" rotationSpeed={1.2} />
+          <FloatingSymbol position={[2, 0.5, 1.5]} symbol="🎓" color="#FFB800" rotationSpeed={0.8} />
+          <FloatingSymbol position={[0, 1.5, 2]} symbol="💍" color="#FF6B00" rotationSpeed={1} />
+          <FloatingSymbol position={[-1, 1, 1.5]} symbol="🎂" color="#FFB800" rotationSpeed={1.2} />
+          {/* Butterflies */}
+          {butterflies}
           {/* Floating Particles */}
           {particles}
         </group>
