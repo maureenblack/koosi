@@ -85,6 +85,8 @@ const Header: React.FC = () => {
             </Link>
           </nav>
 
+
+
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center space-x-4">
             {user ? (

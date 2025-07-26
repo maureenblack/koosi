@@ -9,6 +9,7 @@ import Pricing from './pages/Pricing';
 import { Login } from './components/Login';
 import { SignupSuccess } from './components/SignupSuccess';
 import { Dashboard } from './pages/Dashboard';
+import Features from './components/Features';
 import './App.css';
 import './index.css';
 import '@fontsource/inter/400.css';
@@ -27,6 +28,7 @@ function App() {
           <Header />
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/features" element={<Features />} />
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/login" element={<Login />} />

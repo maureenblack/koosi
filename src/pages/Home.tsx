@@ -1,6 +1,7 @@
 import React from 'react';
 import Hero from '../components/Hero';
 import Features from '../components/Features';
+import HowItWorksSection from '../components/HowItWorksSection';
 import { Suspense, lazy } from 'react';
 const Scene3D = lazy(() => import('../components/Scene3D'));
 
@@ -34,6 +35,7 @@ const Home = () => {
         <div className="relative z-10">
           <Hero />
           <Features />
+          <HowItWorksSection />
         </div>
       </div>
     </div>
