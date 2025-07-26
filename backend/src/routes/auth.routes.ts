@@ -1,26 +1,20 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { OAuth2Client } from 'google-auth-library';
-import { Octokit } from '@octokit/rest';
 import jwt from 'jsonwebtoken';
-import CryptoJS from 'crypto-js';
 import { prisma } from '../lib/prisma';
 import env from '../config/env';
 import { AppError } from '../utils/AppError';
-import { authenticate } from '../middleware/auth';
 
 export const authRoutes = Router();
 
 // Validation schemas
 const socialLoginSchema = z.object({
-  provider: z.enum(['google', 'github', 'x']),
   token: z.string(),
 });
 
 const walletLoginSchema = z.object({
-  walletType: z.enum(['cardano', 'ethereum']),
   address: z.string(),
-  signature: z.string(),
 });
 
 // OAuth clients
@@ -32,46 +26,23 @@ const generateToken = (user: { id: string; email: string }) => {
 };
 
 // Routes
-authRoutes.post('/social/login', async (req, res, next) => {
+authRoutes.post('/social/login', async (req: Request, res: Response) => {
   try {
-    const { provider, token } = socialLoginSchema.parse(req.body);
-    let userData: { id: string; email: string; name: string } | null = null;
-
-    switch (provider) {
-      case 'google':
-        const ticket = await googleClient.verifyIdToken({
-          idToken: token,
-          audience: env.GOOGLE_CLIENT_ID,
-        });
-        const payload = ticket.getPayload();
-        if (!payload?.email) throw new AppError('Invalid token', 400);
-        userData = {
-          id: payload.sub,
-          email: payload.email,
-          name: payload.name || '',
-        };
-        break;
-
-      case 'github':
-        const octokit = new Octokit({ auth: token });
-        const { data } = await octokit.users.getAuthenticated();
-        userData = {
-          id: data.id.toString(),
-          email: data.email || '',
-          name: data.name || '',
-        };
-        break;
-
-      default:
-        throw new AppError('Unsupported provider', 400);
+    const { token } = socialLoginSchema.parse(req.body);
+    const ticket = await googleClient.verifyIdToken({
+      idToken: token,
+      audience: env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    if (!payload || !payload.email) {
+      throw new AppError('Invalid token', 400);
     }
 
     let user = await prisma.user.findFirst({
       where: {
         OR: [
-          { email: userData.email },
-          { googleId: provider === 'google' ? userData.id : undefined },
-          { githubId: provider === 'github' ? userData.id : undefined },
+          { email: payload.email },
+          { googleId: payload.sub },
         ],
       },
     });
@@ -79,31 +50,27 @@ authRoutes.post('/social/login', async (req, res, next) => {
     if (!user) {
       user = await prisma.user.create({
         data: {
-          email: userData.email,
-          name: userData.name,
-          ...(provider === 'google' ? { googleId: userData.id } : {}),
-          ...(provider === 'github' ? { githubId: userData.id } : {}),
+          email: payload.email,
+          name: payload.name || 'User',
+          googleId: payload.sub,
         },
       });
     }
 
-    const token = generateToken({ id: user.id, email: user.email });
-    res.json({ token });
+    const authToken = generateToken({ id: user.id, email: user.email });
+    res.json({ token: authToken });
   } catch (error) {
-    next(error);
+    if (error instanceof Error) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
 });
 
-authRoutes.post('/wallet/connect', async (req, res, next) => {
+authRoutes.post('/wallet/connect', async (req: Request, res: Response) => {
   try {
-    const { walletType, address, signature } = walletLoginSchema.parse(req.body);
-
-    // Verify wallet signature here based on walletType
-    // This is a placeholder - implement actual wallet signature verification
-    const isValidSignature = true;
-    if (!isValidSignature) {
-      throw new AppError('Invalid wallet signature', 400);
-    }
+    const { address } = walletLoginSchema.parse(req.body);
 
     let user = await prisma.user.findUnique({
       where: { walletAddress: address },
@@ -112,8 +79,8 @@ authRoutes.post('/wallet/connect', async (req, res, next) => {
     if (!user) {
       user = await prisma.user.create({
         data: {
-          email: `${address}@wallet.koosi.io`,
-          name: `Wallet User ${address.slice(0, 8)}`,
+          email: `${address}@wallet.koosi.app`,
+          name: `Wallet ${address.slice(0, 6)}`,
           walletAddress: address,
         },
       });
@@ -122,21 +89,47 @@ authRoutes.post('/wallet/connect', async (req, res, next) => {
     const token = generateToken({ id: user.id, email: user.email });
     res.json({ token });
   } catch (error) {
-    next(error);
+    if (error instanceof Error) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
 });
 
+
 // Get current user
-authRoutes.get('/me', authenticate, async (req: any, res) => {
-  const user = await prisma.user.findUnique({
-    where: { id: req.user.id },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      walletAddress: true,
-      createdAt: true,
-    },
-  });
-  res.json(user);
+authRoutes.get('/me', async (req: Request, res: Response) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      res.status(401).json({ error: 'No token provided' });
+      return;
+    }
+
+    const decoded = jwt.verify(token, env.JWT_SECRET) as { id: string };
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        walletAddress: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    res.json(user);
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(401).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
 });

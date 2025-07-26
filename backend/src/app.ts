@@ -1,14 +1,10 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { config } from './config';
-import { errorHandler } from './middleware/errorHandler';
 import { authRoutes } from './routes/auth.routes';
 import { userRoutes } from './routes/user.routes';
-import { capsuleRoutes } from './routes/capsule.routes';
-import { triggerRoutes } from './routes/trigger.routes';
-import { consensusRoutes } from './routes/consensus.routes';
 
 const app = express();
 
@@ -26,13 +22,27 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Routes
+app.get('/', (req, res) => {
+  res.json({ message: 'Welcome to Koosi API' });
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/capsules', capsuleRoutes);
-app.use('/api/triggers', triggerRoutes);
-app.use('/api/consensus', consensusRoutes);
+
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ error: 'Not found' });
+});
 
 // Error handling
-app.use(errorHandler);
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  console.error(err);
+  if (err instanceof Error) {
+    res.status(500).json({ error: err.message });
+  } else {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 export { app };
