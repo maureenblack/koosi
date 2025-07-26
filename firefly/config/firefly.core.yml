@@ -1,0 +1,71 @@
+org:
+  name: koosi
+  description: "Koosi Platform - Temporal Message Orchestration"
+  key: "koosi-platform"
+
+http:
+  port: 5000
+  address: "0.0.0.0"
+  publicURL: "http://localhost:5000"
+
+tokens:
+  - name: "koosi-messages"
+    type: "erc1155"
+    symbol: "KOOSI"
+
+plugins:
+  blockchain:
+    - name: ethereum
+      type: ethereum
+      ethereum:
+        url: http://ethereum:5000
+        instance: default
+  dataexchange:
+    - name: ipfs
+      type: ipfs
+      ipfs:
+        api:
+          url: http://ipfs:5001
+        gateway:
+          url: http://ipfs:8080
+  sharedstorage:
+    - name: ipfs
+      type: ipfs
+      ipfs:
+        api:
+          url: http://ipfs:5001
+        gateway:
+          url: http://ipfs:8080
+
+namespaces:
+  predefined:
+    - name: default
+      description: "Default namespace for Koosi operations"
+      plugins: ["ethereum", "ipfs"]
+      defaultKey: "0x"
+
+organizations:
+  predefined:
+    - name: "Koosi Platform"
+      description: "Root organization for Koosi platform"
+      key: "koosi-platform"
+      identity:
+        type: "custom"
+        custom:
+          name: "Koosi Platform"
+          registryName: "koosi"
+          key: "koosi-platform"
+
+events:
+  webhooks:
+    enabled: true
+    retry:
+      factor: 2
+      maxDelay: 30m
+      minDelay: 5s
+      maxRetries: 5
+
+metrics:
+  enabled: true
+  path: /metrics
+  address: "0.0.0.0:9090"

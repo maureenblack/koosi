@@ -1,0 +1,110 @@
+version: "3.7"
+
+services:
+  postgres:
+    image: postgres:14
+    environment:
+      POSTGRES_PASSWORD: firefly_pass
+      POSTGRES_USER: firefly
+      POSTGRES_DB: firefly
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U firefly"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ipfs:
+    image: ipfs/kubo:v0.17.0
+    volumes:
+      - ipfs_data:/data/ipfs
+    ports:
+      - "5001:5001"  # API
+      - "4001:4001"  # Swarm
+    healthcheck:
+      test: ["CMD", "ipfs", "id"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  ethereum:
+    image: hyperledger/firefly-ethconnect:v3.1.1
+    environment:
+      ETHCONNECT_URL: http://localhost:5000
+      ETHCONNECT_ETHEREUM_URL: http://geth:8545
+      ETHCONNECT_ETHEREUM_CHAINID: 2018
+    depends_on:
+      - geth
+    ports:
+      - "5000:5000"
+
+  geth:
+    image: ethereum/client-go:v1.10.26
+    command:
+      - --dev
+      - --dev.period=1
+      - --rpc
+      - --rpcaddr=0.0.0.0
+      - --rpcport=8545
+      - --rpcapi=eth,net,web3,debug
+      - --rpccorsdomain="*"
+    ports:
+      - "8545:8545"
+
+  firefly:
+    image: hyperledger/firefly:v1.1.1
+    depends_on:
+      - postgres
+      - ipfs
+      - ethereum
+    environment:
+      FIREFLY_DB_TYPE: postgres
+      FIREFLY_DB_URL: postgres://firefly:firefly_pass@postgres:5432/firefly?sslmode=disable
+      FIREFLY_DB_MIGRATIONS: "true"
+      FIREFLY_HTTP_PORT: 5000
+      FIREFLY_HTTP_ADDRESS: 0.0.0.0
+      FIREFLY_LOG_LEVEL: debug
+      FIREFLY_PLUGINS_BLOCKCHAIN_TYPE: ethereum
+      FIREFLY_PLUGINS_BLOCKCHAIN_ETHEREUM_URL: http://ethereum:5000
+      FIREFLY_PLUGINS_DATAEXCHANGE_TYPE: ipfs
+      FIREFLY_PLUGINS_DATAEXCHANGE_IPFS_API_URL: http://ipfs:5001
+      FIREFLY_PLUGINS_DATAEXCHANGE_IPFS_GATEWAY_URL: http://ipfs:8080
+      FIREFLY_PLUGINS_SHAREDSTORAGE_TYPE: ipfs
+      FIREFLY_PLUGINS_SHAREDSTORAGE_IPFS_API_URL: http://ipfs:5001
+      FIREFLY_PLUGINS_SHAREDSTORAGE_IPFS_GATEWAY_URL: http://ipfs:8080
+      FIREFLY_CORS_ENABLED: "true"
+      FIREFLY_CORS_ORIGINS: "*"
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./config:/etc/firefly
+
+  prometheus:
+    image: prom/prometheus:v2.42.0
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:9.4.7
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+
+volumes:
+  postgres_data:
+  ipfs_data:
+  prometheus_data:
+  grafana_data:
