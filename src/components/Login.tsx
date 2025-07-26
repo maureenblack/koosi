@@ -37,11 +37,11 @@ export const Login: React.FC = () => {
     try {
       if (isSignup) {
         await AuthService.signup(formData);
+        navigate('/signup-success');
       } else {
         await AuthService.login(formData);
+        navigate('/dashboard');
       }
-      // Instead of reloading, redirect to home
-      navigate('/');
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -68,7 +68,7 @@ export const Login: React.FC = () => {
       setError('');
       setLoading(true);
       await AuthService.socialLogin('google', credentialResponse.credential);
-      navigate('/');
+      navigate('/dashboard');
     } catch (err: any) {
       setError(err.message);
     } finally {

@@ -48,6 +48,7 @@ const generateToken = (user: { id: string; email: string }) => {
 // Signup route
 authRoutes.post('/signup', async (req: Request, res: Response) => {
   try {
+    console.log('📝 Signup request received:', { email: req.body.email, name: req.body.name });
     const { email, password, name } = signupSchema.parse(req.body);
 
     // Check if user already exists
@@ -63,6 +64,7 @@ authRoutes.post('/signup', async (req: Request, res: Response) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user
+    console.log('🔨 Creating new user in database...');
     const user = await prisma.user.create({
       data: {
         email,
@@ -70,9 +72,12 @@ authRoutes.post('/signup', async (req: Request, res: Response) => {
         password: hashedPassword
       }
     });
+    console.log('✅ User created successfully:', { id: user.id, email: user.email });
 
     // Generate token
+    console.log('🔑 Generating JWT token...');
     const token = generateToken({ id: user.id, email: user.email });
+    console.log('✅ Token generated successfully');
 
     res.json({ token });
   } catch (error) {
