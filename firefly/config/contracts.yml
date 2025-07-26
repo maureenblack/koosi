@@ -1,0 +1,114 @@
+contracts:
+  ethereum:
+    KoosiToken:
+      address: "${KOOSI_TOKEN_ADDRESS}"
+      chain: "ethereum"
+      interface:
+        - name: "mint"
+          method: "mint(address,uint256,uint256,bytes)"
+          params:
+            - name: "to"
+              type: "address"
+            - name: "id"
+              type: "uint256"
+            - name: "amount"
+              type: "uint256"
+            - name: "data"
+              type: "bytes"
+        - name: "initiateCrossChainTransfer"
+          method: "initiateCrossChainTransfer(bytes32,address,uint256[],uint256[])"
+          params:
+            - name: "destinationChain"
+              type: "bytes32"
+            - name: "from"
+              type: "address"
+            - name: "ids"
+              type: "uint256[]"
+            - name: "amounts"
+              type: "uint256[]"
+
+    KoosiBridge:
+      address: "${KOOSI_BRIDGE_ADDRESS}"
+      chain: "ethereum"
+      interface:
+        - name: "initiateTransferToCardano"
+          method: "initiateTransferToCardano(bytes32,uint256[],uint256[])"
+          params:
+            - name: "cardanoAddress"
+              type: "bytes32"
+            - name: "tokenIds"
+              type: "uint256[]"
+            - name: "amounts"
+              type: "uint256[]"
+        - name: "confirmCardanoTransfer"
+          method: "confirmCardanoTransfer(bytes32,bytes32)"
+          params:
+            - name: "txHash"
+              type: "bytes32"
+            - name: "cardanoTxHash"
+              type: "bytes32"
+
+  cardano:
+    KoosiValidator:
+      address: "${KOOSI_VALIDATOR_ADDRESS}"
+      chain: "cardano"
+      interface:
+        - name: "mintTokens"
+          method: "mint_tokens"
+          params:
+            - name: "eth_tx_hash"
+              type: "ByteString"
+            - name: "eth_address"
+              type: "ByteString"
+            - name: "token_type"
+              type: "Integer"
+            - name: "amount"
+              type: "Integer"
+        - name: "burnTokens"
+          method: "burn_tokens"
+          params:
+            - name: "token_type"
+              type: "Integer"
+            - name: "amount"
+              type: "Integer"
+            - name: "eth_address"
+              type: "ByteString"
+
+tokens:
+  pools:
+    - name: "KoosiAccessToken"
+      type: "fungible"
+      symbol: "KOOSI-ACCESS"
+      decimals: 0
+      contract: "KoosiToken"
+      index: 1
+
+    - name: "KoosiPremiumToken"
+      type: "fungible"
+      symbol: "KOOSI-PREMIUM"
+      decimals: 0
+      contract: "KoosiToken"
+      index: 2
+
+    - name: "KoosiSpecialCapsule"
+      type: "nonfungible"
+      symbol: "KOOSI-SPECIAL"
+      contract: "KoosiToken"
+      index: 3
+
+events:
+  subscriptions:
+    - event: "CrossChainTransferInitiated"
+      contract: "KoosiBridge"
+      handler: "processCrossChainTransfer"
+      filters:
+        - field: "fromChain"
+          value: "ethereum"
+
+    - event: "TokenMinted"
+      contract: "KoosiToken"
+      handler: "processTokenMint"
+
+    - event: "CrossChainTransferCompleted"
+      contract: "KoosiBridge"
+      handler: "finalizeCrossChainTransfer"

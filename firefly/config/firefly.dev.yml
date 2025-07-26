@@ -1,0 +1,42 @@
+http:
+  port: 5000
+  address: 127.0.0.1
+  publicURL: http://localhost:5000
+
+database:
+  type: postgres
+  url: postgresql://localhost:5432/firefly?sslmode=disable
+
+storage:
+  type: filesystem
+  path: ./data/storage
+
+events:
+  type: memory
+
+blockchain:
+  type: ethereum
+  ethereum:
+    url: http://localhost:8545
+    chainId: 1337
+
+tokens:
+  - name: koosi
+    type: erc1155
+    address: ${KOOSI_TOKEN_ADDRESS}
+
+plugins:
+  - name: ethereum
+    type: blockchain
+    ethereum:
+      url: http://localhost:8545
+      chainId: 1337
+
+  - name: postgres
+    type: database
+    postgres:
+      url: postgresql://localhost:5432/firefly?sslmode=disable
+
+log:
+  level: debug
+  json: false
