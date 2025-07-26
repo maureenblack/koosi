@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthService, User } from '../services/auth.service';
 
 const Header: React.FC = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,6 +26,13 @@ const Header: React.FC = () => {
 
     loadUser();
   }, []);
+
+  const handleLogout = () => {
+    AuthService.clearToken();
+    setUser(null);
+    navigate('/');
+    setIsMenuOpen(false);
+  };
 
   return (
     <header 
@@ -71,22 +79,6 @@ const Header: React.FC = () => {
               <span className="relative z-10">How It Works</span>
               <div className="absolute inset-0 rounded-full bg-gradient-to-r from-orange-400 to-yellow-400 opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
             </Link>
-            {!loading && (
-              user && (
-                <div className="flex items-center space-x-4">
-                  <span className="text-white/90">{user.name}</span>
-                  <button
-                    onClick={() => {
-                      AuthService.logout();
-                      window.location.reload();
-                    }}
-                    className="px-4 py-2 rounded-full text-white/90 hover:text-white hover:bg-gradient-to-r hover:from-red-500/20 hover:to-red-600/20 transition-all duration-300 font-medium relative group"
-                  >
-                    Logout
-                  </button>
-                </div>
-              )
-            )}
             <Link to="/pricing" className="no-underline px-4 py-2 rounded-full text-white/90 hover:text-white hover:bg-gradient-to-r hover:from-orange-500/20 hover:to-yellow-500/20 transition-all duration-300 font-medium relative group">
               <span className="relative z-10">Pricing</span>
               <div className="absolute inset-0 rounded-full bg-gradient-to-r from-orange-400 to-yellow-400 opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
@@ -95,15 +87,59 @@ const Header: React.FC = () => {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link to="/login" className="no-underline text-white/90 hover:text-white transition-colors duration-300 font-medium px-6 py-2 rounded-full border border-white/20 hover:border-white/40 backdrop-blur-sm">
-              Sign In
-            </Link>
-            <Link to="/login?signup=true" className="no-underline relative group overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-orange-500 via-yellow-500 to-orange-500 bg-size-200 animate-gradient-x rounded-full"></div>
-              <div className="relative bg-gradient-to-r from-orange-500 to-yellow-500 text-white font-semibold px-8 py-3 rounded-full transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl group-hover:shadow-orange-500/30">
-                Get Started
+            {user ? (
+              <div className="relative">
+                <button
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium focus:outline-none"
+                >
+                  <span>{user.name}</span>
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {isMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5">
+                    <Link
+                      to="/dashboard"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Dashboard
+                    </Link>
+                    <Link
+                      to="/profile"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Profile Settings
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                )}
               </div>
-            </Link>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/login?signup=true"
+                  className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-md text-sm font-medium"
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
