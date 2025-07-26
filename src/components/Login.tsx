@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthService, SignupData, LoginData } from '../services/auth.service';
 import { GoogleLogin } from '@react-oauth/google';
 
 export const Login: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isSignup, setIsSignup] = useState(false);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     if (searchParams.has('signup')) {
       setIsSignup(true);
+      // Remove the signup parameter from URL
+      navigate('/login', { replace: true });
     }
-  }, [location]);
+  }, [location, navigate]);
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<SignupData & LoginData>({
@@ -37,7 +40,8 @@ export const Login: React.FC = () => {
       } else {
         await AuthService.login(formData);
       }
-      window.location.reload();
+      // Instead of reloading, redirect to home
+      navigate('/');
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -64,7 +68,7 @@ export const Login: React.FC = () => {
       setError('');
       setLoading(true);
       await AuthService.socialLogin('google', credentialResponse.credential);
-      window.location.reload();
+      navigate('/');
     } catch (err: any) {
       setError(err.message);
     } finally {

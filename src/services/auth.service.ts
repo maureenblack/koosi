@@ -1,22 +1,26 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3001/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+const TOKEN_KEY = 'koosi_auth_token';
 
 export interface User {
   id: string;
   email: string;
   name: string;
+  walletAddress?: string;
+  googleId?: string;
+  githubId?: string;
   createdAt: string;
 }
 
-export interface AuthResponse {
+interface AuthResponse {
   token: string;
 }
 
 export interface SignupData {
   email: string;
   password: string;
-  name?: string;
+  name: string;
 }
 
 export interface LoginData {
@@ -29,69 +33,86 @@ export type SocialProvider = 'google' | 'github' | 'twitter';
 export class AuthService {
   private static token: string | null = null;
 
-  static setToken(token: string): void {
-    this.token = token;
-    localStorage.setItem('token', token);
-  }
-
   static getToken(): string | null {
     if (!this.token) {
-      this.token = localStorage.getItem('token');
+      this.token = localStorage.getItem(TOKEN_KEY);
     }
     return this.token;
   }
 
+  static setToken(token: string): void {
+    this.token = token;
+    localStorage.setItem(TOKEN_KEY, token);
+  }
+
   static clearToken(): void {
+    localStorage.removeItem(TOKEN_KEY);
     this.token = null;
-    localStorage.removeItem('token');
   }
 
-  static async signup(data: SignupData): Promise<AuthResponse> {
+  static async signup(data: SignupData): Promise<void> {
     try {
-      const response = await axios.post(`${API_URL}/auth/signup`, data);
-      const authResponse = response.data as AuthResponse;
-      this.setToken(authResponse.token);
-      return authResponse;
-    } catch (error) {
-      throw new Error('Failed to sign up');
+      const response = await axios.post<AuthResponse>(`${API_URL}/auth/signup`, data);
+      const { token } = response.data;
+      this.setToken(token);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || 'Failed to sign up';
+      const details = error.response?.data?.details;
+      if (details) {
+        throw new Error(`${errorMessage}: ${JSON.stringify(details)}`);
+      }
+      throw new Error(errorMessage);
     }
   }
 
-  static async login(data: LoginData): Promise<AuthResponse> {
+  static async login(data: LoginData): Promise<void> {
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, data);
-      const authResponse = response.data as AuthResponse;
-      this.setToken(authResponse.token);
-      return authResponse;
-    } catch (error) {
-      throw new Error('Invalid email or password');
+      const response = await axios.post<AuthResponse>(`${API_URL}/auth/login`, data);
+      const { token } = response.data;
+      this.setToken(token);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || 'Failed to log in';
+      const details = error.response?.data?.details;
+      if (details) {
+        throw new Error(`${errorMessage}: ${JSON.stringify(details)}`);
+      }
+      throw new Error(errorMessage);
     }
   }
 
-  static async socialLogin(provider: SocialProvider, token: string): Promise<AuthResponse> {
+  static async socialLogin(provider: string, token: string): Promise<void> {
     try {
-      const response = await axios.post(`${API_URL}/auth/social/login`, { provider, token });
-      const authResponse = response.data as AuthResponse;
-      this.setToken(authResponse.token);
-      return authResponse;
-    } catch (error) {
-      throw new Error(`Failed to login with ${provider}`);
+      const response = await axios.post<AuthResponse>(`${API_URL}/auth/social/login`, {
+        provider,
+        token,
+      });
+      const { token: authToken } = response.data;
+      this.setToken(authToken);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || 'Failed to log in';
+      const details = error.response?.data?.details;
+      if (details) {
+        throw new Error(`${errorMessage}: ${JSON.stringify(details)}`);
+      }
+      throw new Error(errorMessage);
     }
   }
 
-  static async getCurrentUser(): Promise<User> {
+  static async getCurrentUser(): Promise<User | null> {
     try {
       const token = this.getToken();
-      if (!token) {
-        throw new Error('No token found');
-      }
+      if (!token) return null;
 
-      const response = await axios.get(`${API_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
+      const response = await axios.get<User>(`${API_URL}/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
-      return response.data as User;
+
+      return response.data;
     } catch (error) {
-      throw new Error('Failed to get user profile');
+      this.clearToken();
+      return null;
     }
   }
 

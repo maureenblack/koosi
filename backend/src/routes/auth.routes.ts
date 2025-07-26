@@ -1,14 +1,29 @@
 import { Router, Request, Response } from 'express';
-import { z } from 'zod';
 import { OAuth2Client } from 'google-auth-library';
-import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma';
 import env from '../config/env';
 import { AppError } from '../utils/AppError';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { z } from 'zod';
 
 export const authRoutes = Router();
 
+// Initialize Google OAuth client
+const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID);
+
 // Validation schemas
+const signupSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+  name: z.string().min(1)
+});
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string()
+});
+
 const emailSignupSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
@@ -25,16 +40,91 @@ const socialLoginSchema = z.object({
   provider: z.enum(['google', 'github', 'twitter']),
 });
 
-// OAuth clients
-const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID);
-
-// Helper functions
+// Helper function to generate JWT token
 const generateToken = (user: { id: string; email: string }) => {
   return jwt.sign(user, env.JWT_SECRET, { expiresIn: '7d' });
 };
 
-// Routes
+// Signup route
 authRoutes.post('/signup', async (req: Request, res: Response) => {
+  try {
+    const { email, password, name } = signupSchema.parse(req.body);
+
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (existingUser) {
+      throw new AppError('Email already registered', 400);
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const user = await prisma.user.create({
+      data: {
+        email,
+        name,
+        password: hashedPassword
+      }
+    });
+
+    // Generate token
+    const token = generateToken({ id: user.id, email: user.email });
+
+    res.json({ token });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: 'Invalid input data', details: error.format() });
+    } else if (error instanceof AppError) {
+      res.status(error.statusCode).json({ error: error.message });
+    } else {
+      console.error('Signup error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+});
+
+// Login route
+authRoutes.post('/login', async (req: Request, res: Response) => {
+  try {
+    const { email, password } = loginSchema.parse(req.body);
+
+    // Find user
+    const user = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (!user || !user.password) {
+      throw new AppError('Invalid email or password', 401);
+    }
+
+    // Verify password
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      throw new AppError('Invalid email or password', 401);
+    }
+
+    // Generate token
+    const token = generateToken({ id: user.id, email: user.email });
+
+    res.json({ token });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: 'Invalid input data', details: error.format() });
+    } else if (error instanceof AppError) {
+      res.status(error.statusCode).json({ error: error.message });
+    } else {
+      console.error('Login error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+});
+
+// Email signup route
+authRoutes.post('/email/signup', async (req: Request, res: Response) => {
   try {
     const { email, password, name } = emailSignupSchema.parse(req.body);
 
@@ -65,7 +155,8 @@ authRoutes.post('/signup', async (req: Request, res: Response) => {
   }
 });
 
-authRoutes.post('/login', async (req: Request, res: Response) => {
+// Email login route
+authRoutes.post('/email/login', async (req: Request, res: Response) => {
   try {
     const { email, password } = emailLoginSchema.parse(req.body);
 
@@ -88,6 +179,7 @@ authRoutes.post('/login', async (req: Request, res: Response) => {
   }
 });
 
+// Social login route
 authRoutes.post('/social/login', async (req: Request, res: Response) => {
   try {
     const { token, provider } = socialLoginSchema.parse(req.body);
