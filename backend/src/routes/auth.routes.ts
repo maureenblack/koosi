@@ -9,12 +9,20 @@ import { AppError } from '../utils/AppError';
 export const authRoutes = Router();
 
 // Validation schemas
-const socialLoginSchema = z.object({
-  token: z.string(),
+const emailSignupSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+  name: z.string().optional(),
 });
 
-const walletLoginSchema = z.object({
-  address: z.string(),
+const emailLoginSchema = z.object({
+  email: z.string().email(),
+  password: z.string(),
+});
+
+const socialLoginSchema = z.object({
+  token: z.string(),
+  provider: z.enum(['google', 'github', 'twitter']),
 });
 
 // OAuth clients
@@ -26,15 +34,94 @@ const generateToken = (user: { id: string; email: string }) => {
 };
 
 // Routes
+authRoutes.post('/signup', async (req: Request, res: Response) => {
+  try {
+    const { email, password, name } = emailSignupSchema.parse(req.body);
+
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      throw new AppError('Email already in use', 400);
+    }
+
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password, // Note: In production, hash the password before storing
+        name: name || email.split('@')[0],
+      },
+    });
+
+    const token = generateToken({ id: user.id, email: user.email });
+    res.json({ token });
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+});
+
+authRoutes.post('/login', async (req: Request, res: Response) => {
+  try {
+    const { email, password } = emailLoginSchema.parse(req.body);
+
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user || user.password !== password) { // Note: In production, use proper password comparison
+      throw new AppError('Invalid email or password', 401);
+    }
+
+    const token = generateToken({ id: user.id, email: user.email });
+    res.json({ token });
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(401).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+});
+
 authRoutes.post('/social/login', async (req: Request, res: Response) => {
   try {
-    const { token } = socialLoginSchema.parse(req.body);
-    const ticket = await googleClient.verifyIdToken({
-      idToken: token,
-      audience: env.GOOGLE_CLIENT_ID,
-    });
-    const payload = ticket.getPayload();
-    if (!payload || !payload.email) {
+    const { token, provider } = socialLoginSchema.parse(req.body);
+    let payload: { email?: string; name?: string; sub?: string } | null = null;
+
+    switch (provider) {
+      case 'google':
+        const ticket = await googleClient.verifyIdToken({
+          idToken: token,
+          audience: env.GOOGLE_CLIENT_ID,
+        });
+        const googlePayload = ticket.getPayload();
+        if (googlePayload) {
+          payload = {
+            email: googlePayload.email,
+            name: googlePayload.name,
+            sub: googlePayload.sub,
+          };
+        }
+        break;
+
+      case 'github':
+        // TODO: Implement GitHub OAuth verification
+        throw new AppError('GitHub login not implemented yet', 501);
+
+      case 'twitter':
+        // TODO: Implement Twitter OAuth verification
+        throw new AppError('Twitter login not implemented yet', 501);
+
+      default:
+        throw new AppError('Invalid provider', 400);
+    }
+
+    if (!payload?.email) {
       throw new AppError('Invalid token', 400);
     }
 
@@ -51,8 +138,8 @@ authRoutes.post('/social/login', async (req: Request, res: Response) => {
       user = await prisma.user.create({
         data: {
           email: payload.email,
-          name: payload.name || 'User',
-          googleId: payload.sub,
+          name: payload.name || payload.email.split('@')[0],
+          googleId: provider === 'google' ? payload.sub : undefined,
         },
       });
     }
@@ -61,36 +148,7 @@ authRoutes.post('/social/login', async (req: Request, res: Response) => {
     res.json({ token: authToken });
   } catch (error) {
     if (error instanceof Error) {
-      res.status(400).json({ error: error.message });
-    } else {
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  }
-});
-
-authRoutes.post('/wallet/connect', async (req: Request, res: Response) => {
-  try {
-    const { address } = walletLoginSchema.parse(req.body);
-
-    let user = await prisma.user.findUnique({
-      where: { walletAddress: address },
-    });
-
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          email: `${address}@wallet.koosi.app`,
-          name: `Wallet ${address.slice(0, 6)}`,
-          walletAddress: address,
-        },
-      });
-    }
-
-    const token = generateToken({ id: user.id, email: user.email });
-    res.json({ token });
-  } catch (error) {
-    if (error instanceof Error) {
-      res.status(400).json({ error: error.message });
+      res.status(error instanceof AppError ? error.statusCode : 400).json({ error: error.message });
     } else {
       res.status(500).json({ error: 'Internal server error' });
     }

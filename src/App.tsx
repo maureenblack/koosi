@@ -1,10 +1,12 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import HowItWorks from './pages/HowItWorks';
 import Pricing from './pages/Pricing';
+import { Login } from './components/Login';
 import './App.css';
 import './index.css';
 import '@fontsource/inter/400.css';
@@ -17,17 +19,20 @@ import '@fontsource/roboto/700.css';
 
 function App() {
   return (
-    <Router>
-      <div className="min-h-screen bg-gradient-to-b from-[#1A0B4A] to-[#2D1B69]">
-        <Header />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/how-it-works" element={<HowItWorks />} />
-          <Route path="/pricing" element={<Pricing />} />
-        </Routes>
-        <Footer />
-      </div>
-    </Router>
+    <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID || ''}>
+      <Router>
+        <div className="min-h-screen bg-gradient-to-b from-[#1A0B4A] to-[#2D1B69]">
+          <Header />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/how-it-works" element={<HowItWorks />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/login" element={<Login />} />
+          </Routes>
+          <Footer />
+        </div>
+      </Router>
+    </GoogleOAuthProvider>
   );
 }
 

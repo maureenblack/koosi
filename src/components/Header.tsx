@@ -1,8 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { AuthService, User } from '../services/auth.service';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const token = AuthService.getToken();
+        if (token) {
+          const userData = await AuthService.getCurrentUser();
+          setUser(userData);
+        }
+      } catch (error) {
+        console.error('Failed to load user:', error);
+        AuthService.clearToken();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUser();
+  }, []);
 
   return (
     <header 
@@ -49,6 +71,22 @@ const Header: React.FC = () => {
               <span className="relative z-10">How It Works</span>
               <div className="absolute inset-0 rounded-full bg-gradient-to-r from-orange-400 to-yellow-400 opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
             </Link>
+            {!loading && (
+              user && (
+                <div className="flex items-center space-x-4">
+                  <span className="text-white/90">{user.name}</span>
+                  <button
+                    onClick={() => {
+                      AuthService.logout();
+                      window.location.reload();
+                    }}
+                    className="px-4 py-2 rounded-full text-white/90 hover:text-white hover:bg-gradient-to-r hover:from-red-500/20 hover:to-red-600/20 transition-all duration-300 font-medium relative group"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )
+            )}
             <Link to="/pricing" className="no-underline px-4 py-2 rounded-full text-white/90 hover:text-white hover:bg-gradient-to-r hover:from-orange-500/20 hover:to-yellow-500/20 transition-all duration-300 font-medium relative group">
               <span className="relative z-10">Pricing</span>
               <div className="absolute inset-0 rounded-full bg-gradient-to-r from-orange-400 to-yellow-400 opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
@@ -57,10 +95,10 @@ const Header: React.FC = () => {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link to="/signin" className="no-underline text-white/90 hover:text-white transition-colors duration-300 font-medium px-6 py-2 rounded-full border border-white/20 hover:border-white/40 backdrop-blur-sm">
+            <Link to="/login" className="no-underline text-white/90 hover:text-white transition-colors duration-300 font-medium px-6 py-2 rounded-full border border-white/20 hover:border-white/40 backdrop-blur-sm">
               Sign In
             </Link>
-            <Link to="/signup" className="no-underline relative group overflow-hidden">
+            <Link to="/login?signup=true" className="no-underline relative group overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-orange-500 via-yellow-500 to-orange-500 bg-size-200 animate-gradient-x rounded-full"></div>
               <div className="relative bg-gradient-to-r from-orange-500 to-yellow-500 text-white font-semibold px-8 py-3 rounded-full transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl group-hover:shadow-orange-500/30">
                 Get Started
