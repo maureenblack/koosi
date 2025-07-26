@@ -106,7 +106,7 @@ const HowItWorksSection = () => {
         >
           <Link 
             to="/login?signup=true"
-            className="inline-flex items-center px-8 py-4 rounded-xl bg-gradient-to-r from-orange-500 to-yellow-500 text-white font-semibold hover:shadow-lg hover:shadow-orange-500/30 transition-all duration-300 hover:-translate-y-1"
+            className="no-underline inline-flex items-center px-8 py-4 rounded-xl bg-gradient-to-r from-orange-500 to-yellow-500 text-white font-semibold hover:shadow-lg hover:shadow-orange-500/30 transition-all duration-300 hover:-translate-y-1"
           >
             Start Creating
             <ArrowRightIcon className="w-5 h-5 ml-2" />

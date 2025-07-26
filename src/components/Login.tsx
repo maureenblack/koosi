@@ -82,7 +82,7 @@ export const Login: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white p-8 rounded-lg shadow-md w-96">
+      <div className="bg-white p-8 rounded-lg shadow-md w-[480px]">
         <h2 className="text-2xl font-bold mb-6 text-center">
           {isSignup ? 'Create Account' : 'Welcome Back'}
         </h2>
@@ -144,7 +144,7 @@ export const Login: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-3 gap-3">
+          <div className="mt-6 flex flex-col space-y-3">
             <div className="flex justify-center">
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
@@ -152,20 +152,22 @@ export const Login: React.FC = () => {
                 useOneTap
               />
             </div>
-            <button
-              type="button"
-              onClick={() => handleSocialLogin('github')}
-              className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-            >
-              GitHub
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSocialLogin('twitter')}
-              className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-            >
-              Twitter
-            </button>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => handleSocialLogin('github')}
+                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+              >
+                GitHub
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSocialLogin('twitter')}
+                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+              >
+                Twitter
+              </button>
+            </div>
           </div>
         </div>
 
