@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useRef, Suspense } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, useMotionValue, useSpring, useTransform, useScroll } from 'framer-motion';
-import { Clock, Heart, Sparkles, ArrowRight, Zap, Play, MousePointer } from 'lucide-react';
-import Scene3D from './Scene3D';
+import { Heart, Sparkles, ArrowRight, Zap, Play, MousePointer } from 'lucide-react';
 import MagneticButton from './MagneticButton';
 import { CounterAnimation } from './ScrollAnimations';
 
@@ -86,11 +85,7 @@ const Hero = () => {
         `
       }}
     >
-      <div className="absolute inset-0 w-full h-full">
-        <Suspense fallback={null}>
-          <Scene3D />
-        </Suspense>
-      </div>
+
 
       {/* Dynamic Mesh Gradient */}
       <motion.div
@@ -143,32 +138,7 @@ const Hero = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 1, ease: "easeOut" }}
           >
-            {/* Floating Badge */}
-            <motion.div
-              className="inline-flex items-center px-6 py-3 rounded-full backdrop-blur-sm border text-orange-300 text-sm font-medium mb-8 relative overflow-hidden"
-              style={{
-                background: 'rgba(255, 107, 53, 0.1)',
-                borderColor: 'rgba(255, 107, 53, 0.3)'
-              }}
-              whileHover={{ scale: 1.05 }}
-              animate={{
-                boxShadow: [
-                  '0 0 20px rgba(255, 107, 53, 0.3)',
-                  '0 0 40px rgba(255, 107, 53, 0.5)',
-                  '0 0 20px rgba(255, 107, 53, 0.3)'
-                ]
-              }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                animate={{ x: ['-100%', '100%'] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-              />
-              <Clock className="w-4 h-4 mr-2 z-10" />
-              <span className="z-10">AI-Powered Temporal Technology</span>
-              <Sparkles className="w-4 h-4 ml-2 z-10" />
-            </motion.div>
+
 
             {/* Animated Headline */}
             <h1 className="text-5xl lg:text-7xl font-bold text-white mb-6 leading-tight">
@@ -220,8 +190,8 @@ const Hero = () => {
                 animate={{ opacity: [1, 0.7, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
               >
-                {" "}AI determines perfect timing
-              </motion.span> based on life events, achievements, and emotional readiness.
+                {" "}Perfect timing
+              </motion.span> based on life events and achievements.
             </motion.p>
             
             {/* Enhanced CTA Buttons */}
