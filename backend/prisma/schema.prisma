@@ -13,3 +13,51 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  name          String?
+  githubId      String?   @unique
+  googleId      String?   @unique
+  twitterId     String?   @unique
+  walletAddress String?   @unique
+  capsules      Capsule[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Capsule {
+  id          String     @id @default(uuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id])
+  content     String
+  triggerType String
+  conditions  Json
+  trigger     Trigger?
+  recipients  Recipient[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Trigger {
+  id          String   @id @default(uuid())
+  capsuleId   String   @unique
+  capsule     Capsule  @relation(fields: [capsuleId], references: [id])
+  type        String
+  conditions  Json
+  status      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Recipient {
+  id        String   @id @default(uuid())
+  capsuleId String
+  capsule   Capsule  @relation(fields: [capsuleId], references: [id])
+  email     String
+  status    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

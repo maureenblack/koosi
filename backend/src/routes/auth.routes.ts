@@ -24,16 +24,7 @@ const loginSchema = z.object({
   password: z.string()
 });
 
-const emailSignupSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-  name: z.string().optional(),
-});
 
-const emailLoginSchema = z.object({
-  email: z.string().email(),
-  password: z.string(),
-});
 
 const socialLoginSchema = z.object({
   token: z.string(),
@@ -81,12 +72,14 @@ authRoutes.post('/signup', async (req: Request, res: Response) => {
 
     res.json({ token });
   } catch (error) {
+    console.error('Signup error:', error);
     if (error instanceof z.ZodError) {
       res.status(400).json({ error: 'Invalid input data', details: error.format() });
     } else if (error instanceof AppError) {
       res.status(error.statusCode).json({ error: error.message });
+    } else if (error instanceof Error) {
+      res.status(500).json({ error: error.message });
     } else {
-      console.error('Signup error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   }
@@ -117,21 +110,23 @@ authRoutes.post('/login', async (req: Request, res: Response) => {
 
     res.json({ token });
   } catch (error) {
+    console.error('Login error:', error);
     if (error instanceof z.ZodError) {
       res.status(400).json({ error: 'Invalid input data', details: error.format() });
     } else if (error instanceof AppError) {
       res.status(error.statusCode).json({ error: error.message });
+    } else if (error instanceof Error) {
+      res.status(500).json({ error: error.message });
     } else {
-      console.error('Login error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   }
 });
 
-// Email signup route
-authRoutes.post('/email/signup', async (req: Request, res: Response) => {
+// Signup route
+authRoutes.post('/signup', async (req: Request, res: Response) => {
   try {
-    const { email, password, name } = emailSignupSchema.parse(req.body);
+    const { email, password, name } = signupSchema.parse(req.body);
 
     const existingUser = await prisma.user.findUnique({
       where: { email },
@@ -160,10 +155,10 @@ authRoutes.post('/email/signup', async (req: Request, res: Response) => {
   }
 });
 
-// Email login route
-authRoutes.post('/email/login', async (req: Request, res: Response) => {
+// Login route
+authRoutes.post('/login', async (req: Request, res: Response) => {
   try {
-    const { email, password } = emailLoginSchema.parse(req.body);
+    const { email, password } = loginSchema.parse(req.body);
 
     const user = await prisma.user.findUnique({
       where: { email },
@@ -237,6 +232,7 @@ authRoutes.post('/social/login', async (req: Request, res: Response) => {
           email: payload.email,
           name: payload.name || payload.email.split('@')[0],
           googleId: provider === 'google' ? payload.sub : undefined,
+          password: '' // Required by schema but not needed for social login
         },
       });
     }
