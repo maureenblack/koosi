@@ -14,18 +14,39 @@ export class CardanoService {
 
   private async init() {
     try {
-      this.lucid = await Lucid.new(
-        new Blockfrost(
-          process.env.BLOCKFROST_URL!,
-          process.env.BLOCKFROST_PROJECT_ID!
-        ),
-        process.env.CARDANO_NETWORK || 'Testnet'
+      // Validate required environment variables
+      if (!process.env.BLOCKFROST_URL) throw new Error('Missing BLOCKFROST_URL');
+      if (!process.env.BLOCKFROST_PROJECT_ID) throw new Error('Missing BLOCKFROST_PROJECT_ID');
+      if (!process.env.VALIDATOR_ADDRESS) throw new Error('Missing VALIDATOR_ADDRESS');
+      if (!process.env.POLICY_ID) throw new Error('Missing POLICY_ID');
+      if (!process.env.CARDANO_PRIVATE_KEY) throw new Error('Missing CARDANO_PRIVATE_KEY');
+
+      // Initialize Blockfrost provider
+      const provider = new Blockfrost(
+        process.env.BLOCKFROST_URL,
+        process.env.BLOCKFROST_PROJECT_ID
       );
 
-      this.validatorAddress = process.env.VALIDATOR_ADDRESS!;
-      this.policyId = process.env.POLICY_ID!;
+      // Initialize Lucid with correct network
+      const networkStr = process.env.CARDANO_NETWORK || 'Testnet';
+      if (networkStr !== 'Mainnet' && networkStr !== 'Testnet' && networkStr !== 'Preview') {
+        throw new Error('Invalid CARDANO_NETWORK value. Must be Mainnet, Testnet, or Preview');
+      }
+      // Initialize Lucid with network
+      this.lucid = await Lucid.new(
+        provider,
+        networkStr === 'Mainnet' ? 'Mainnet' : networkStr === 'Preview' ? 'Preview' : undefined
+      );
+      if (!this.lucid.wallet) throw new Error('Failed to initialize Lucid');
 
-      this.logger.info('CardanoService initialized');
+      // Load wallet from private key
+      await this.lucid.selectWalletFromPrivateKey(process.env.CARDANO_PRIVATE_KEY);
+
+      // Set service variables
+      this.validatorAddress = process.env.VALIDATOR_ADDRESS;
+      this.policyId = process.env.POLICY_ID;
+
+      this.logger.info('CardanoService initialized successfully');
     } catch (error) {
       this.logger.error(`Error initializing CardanoService: ${error}`);
       throw error;
@@ -70,10 +91,46 @@ export class CardanoService {
     }
   }
 
+  async transfer(params: {
+    tokenId: bigint;
+    amount: bigint;
+    address: string;
+  }): Promise<{ hash: string }> {
+    try {
+      const { tokenId, amount, address } = params;
+
+      // Prepare token transfer
+      const assetName = Buffer.from(`KOOSI_${tokenId}`).toString('hex');
+      const assets = {
+        [`${this.policyId}${assetName}`]: amount
+      };
+
+      // Create transaction
+      const tx = await this.lucid
+        .newTx()
+        .payToAddress(address as Address, assets)
+        .validFrom(Date.now())
+        .validTo(Date.now() + 1800000) // 30 minutes
+        .complete();
+
+      // Sign and submit
+      const signedTx = await tx.sign().complete();
+      const txHash = await signedTx.submit();
+
+      this.logger.info(`Transferred tokens with tx: ${txHash}`);
+      return { hash: txHash };
+    } catch (error) {
+      this.logger.error(`Error transferring tokens: ${error}`);
+      throw error;
+    }
+  }
+
   async verifyTransaction(txHash: string): Promise<boolean> {
     try {
-      const tx = await this.lucid.provider.getTransaction(txHash as TxHash);
-      return tx !== null;
+      // Use awaitTx with timeout 0 to check if transaction exists and is confirmed
+      // If it throws, the transaction either doesn't exist or isn't confirmed
+      await this.lucid.awaitTx(txHash as TxHash, 0);
+      return true;
     } catch (error) {
       this.logger.error(`Error verifying transaction: ${error}`);
       return false;

@@ -1,107 +1,114 @@
-import { FireFly } from '@hyperledger/firefly-sdk';
+import FireFly from '@hyperledger/firefly-sdk';
 import { CardanoService } from '../services/CardanoService';
 import { EthereumService } from '../services/EthereumService';
 import { Logger } from '../utils/logger';
 
+interface CrossChainEvent {
+  data: {
+    tokenId: string;
+    amount: string;
+    cardanoAddress?: string;
+    ethereumAddress?: string;
+    txHash?: string;
+    cardanoTxHash?: string;
+  };
+}
+
+interface TokenMintEvent {
+  data: {
+    to: string;
+    id: string;
+    amount: string;
+  };
+}
+
 export class ContractEventHandler {
-  private firefly: FireFly;
-  private cardano: CardanoService;
-  private ethereum: EthereumService;
-  private logger: Logger;
+  private readonly firefly: FireFly;
+  private readonly cardano: CardanoService;
+  private readonly ethereum: EthereumService;
+  private readonly logger: Logger;
 
-  constructor() {
-    this.firefly = new FireFly({
-      url: process.env.FIREFLY_API || 'http://localhost:5000'
-    });
-    this.cardano = new CardanoService();
-    this.ethereum = new EthereumService();
-    this.logger = new Logger('ContractEventHandler');
+  constructor(
+    firefly: FireFly,
+    cardano: CardanoService,
+    ethereum: EthereumService,
+    logger: Logger
+  ) {
+    this.firefly = firefly;
+    this.cardano = cardano;
+    this.ethereum = ethereum;
+    this.logger = logger;
   }
 
-  async processCrossChainTransfer(event: any): Promise<void> {
+  async processCrossChainTransfer(event: CrossChainEvent): Promise<void> {
     try {
-      const { txHash, from, cardanoAddress, tokenIds, amounts } = event.data;
-      this.logger.info(`Processing cross-chain transfer ${txHash}`);
+      this.logger.info('Processing cross-chain transfer event');
 
-      // Create a batch for atomic operations
-      const batch = await this.firefly.createBatch({
-        type: 'cross_chain_transfer',
-        metadata: {
-          txHash,
-          from,
-          cardanoAddress,
-          tokenIds,
-          amounts
-        }
-      });
+      const { tokenId, amount, cardanoAddress } = event.data;
 
-      // Verify Ethereum transaction
-      const ethTxVerified = await this.ethereum.verifyTransaction(txHash);
-      if (!ethTxVerified) {
-        throw new Error(`Invalid Ethereum transaction: ${txHash}`);
+      // Validate event data
+      if (!tokenId || !amount || !cardanoAddress) {
+        throw new Error('Missing required event data');
       }
 
-      // Mint tokens on Cardano
-      const cardanoTx = await this.cardano.mintTokens({
-        ethTxHash: txHash,
-        address: cardanoAddress,
-        tokenIds,
-        amounts
+      // Call Cardano service to initiate transfer
+      await this.cardano.transfer({
+        tokenId: BigInt(tokenId),
+        amount: BigInt(amount),
+        address: cardanoAddress
       });
 
-      // Wait for Cardano transaction confirmation
-      await this.cardano.waitForConfirmation(cardanoTx.hash);
-
-      // Confirm the cross-chain transfer
-      await this.ethereum.confirmTransfer(txHash, cardanoTx.hash);
-
-      // Complete the batch
-      await this.firefly.completeBatch(batch.id);
-
-      this.logger.info(`Completed cross-chain transfer ${txHash}`);
+      this.logger.info('Successfully initiated Cardano transfer');
     } catch (error) {
-      this.logger.error(`Error processing cross-chain transfer: ${error}`);
+      this.logger.error('Failed to process cross-chain transfer');
       throw error;
     }
   }
 
-  async processTokenMint(event: any): Promise<void> {
+  async processCardanoConfirmation(event: CrossChainEvent): Promise<void> {
     try {
+      this.logger.info('Processing Cardano confirmation event');
+
+      const { tokenId, amount, ethereumAddress, txHash, cardanoTxHash } = event.data;
+
+      // Validate event data
+      if (!tokenId || !amount || !ethereumAddress || !txHash || !cardanoTxHash) {
+        throw new Error('Missing required event data');
+      }
+
+      // Call Ethereum service to confirm transfer
+      await this.ethereum.confirmTransfer(txHash, cardanoTxHash);
+
+      this.logger.info('Successfully confirmed Ethereum transfer');
+    } catch (error) {
+      this.logger.error('Failed to process Cardano confirmation');
+      throw error;
+    }
+  }
+
+  async processTokenMint(event: TokenMintEvent): Promise<void> {
+    try {
+      this.logger.info('Processing token mint event');
+
       const { to, id, amount } = event.data;
-      this.logger.info(`Processing token mint: ${id} to ${to}`);
 
-      // Update token pool balance
-      await this.firefly.updateTokenBalance({
-        pool: `token_${id}`,
-        address: to,
-        amount: amount.toString()
-      });
-
-      this.logger.info(`Token mint processed: ${id}`);
-    } catch (error) {
-      this.logger.error(`Error processing token mint: ${error}`);
-      throw error;
-    }
-  }
-
-  async finalizeCrossChainTransfer(event: any): Promise<void> {
-    try {
-      const { txHash, cardanoTxHash } = event.data;
-      this.logger.info(`Finalizing cross-chain transfer ${txHash}`);
-
-      // Verify Cardano transaction
-      const cardanoTxVerified = await this.cardano.verifyTransaction(cardanoTxHash);
-      if (!cardanoTxVerified) {
-        throw new Error(`Invalid Cardano transaction: ${cardanoTxHash}`);
+      // Validate event data
+      if (!to || !id || !amount) {
+        throw new Error('Missing required event data');
       }
 
-      // Update transfer status in FireFly
-      await this.firefly.updateTransferStatus(txHash, 'completed');
+      // Process token mint using Ethereum service
+      await this.ethereum.mintToken({
+        to,
+        tokenId: BigInt(id),
+        amount: BigInt(amount)
+      });
 
-      this.logger.info(`Finalized cross-chain transfer ${txHash}`);
+      this.logger.info('Successfully processed token mint');
     } catch (error) {
-      this.logger.error(`Error finalizing cross-chain transfer: ${error}`);
+      this.logger.error('Failed to process token mint');
       throw error;
     }
   }
+
 }

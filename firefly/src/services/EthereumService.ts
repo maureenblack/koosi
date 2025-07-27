@@ -31,22 +31,6 @@ export class EthereumService {
     }
   }
 
-  async verifyTransaction(txHash: string): Promise<boolean> {
-    try {
-      const tx = await this.provider.getTransaction(txHash);
-      if (!tx) return false;
-
-      // Wait for confirmations
-      const confirmations = await tx.wait(process.env.ETH_CONFIRMATIONS ? 
-        parseInt(process.env.ETH_CONFIRMATIONS) : 12);
-      
-      return confirmations !== null;
-    } catch (error) {
-      this.logger.error(`Error verifying transaction: ${error}`);
-      return false;
-    }
-  }
-
   async confirmTransfer(txHash: string, cardanoTxHash: string): Promise<void> {
     try {
       const tx = await this.koosiBridge.confirmCardanoTransfer(
@@ -61,6 +45,45 @@ export class EthereumService {
     } catch (error) {
       this.logger.error(`Error confirming transfer: ${error}`);
       throw error;
+    }
+  }
+
+  async mintToken(params: {
+    to: string;
+    tokenId: bigint;
+    amount: bigint;
+  }): Promise<void> {
+    try {
+      const { to, tokenId, amount } = params;
+      const tx = await this.koosiBridge.mintToken(
+        to,
+        tokenId,
+        amount,
+        {
+          gasLimit: 200000
+        }
+      );
+      await tx.wait();
+      this.logger.info(`Minted token ${tokenId} to ${to} with amount ${amount}`);
+    } catch (error) {
+      this.logger.error(`Error minting token: ${error}`);
+      throw error;
+    }
+  }
+
+  async verifyTransaction(txHash: string): Promise<boolean> {
+    try {
+      const tx = await this.provider.getTransaction(txHash);
+      if (!tx) return false;
+
+      // Wait for confirmations
+      const confirmations = await tx.wait(process.env.ETH_CONFIRMATIONS ? 
+        parseInt(process.env.ETH_CONFIRMATIONS) : 12);
+      
+      return confirmations !== null;
+    } catch (error) {
+      this.logger.error(`Error verifying transaction: ${error}`);
+      return false;
     }
   }
 

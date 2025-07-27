@@ -4,7 +4,7 @@ const path = require("path");
 
 async function main() {
   const [deployer] = await hre.ethers.getSigners();
-  console.log("Deploying contracts with account:", deployer.address);
+  console.log("Deploying contracts with account:", await deployer.getAddress());
 
   // Deploy KoosiToken
   const KoosiToken = await hre.ethers.getContractFactory("KoosiToken");
@@ -42,11 +42,13 @@ async function main() {
       ethereum: {
         KoosiToken: {
           address: koosiToken.address,
-          chain: network.name
+          chain: hre.network.name,
+          interface: require('../artifacts/contracts/KoosiToken.sol/KoosiToken.json').abi
         },
         KoosiBridge: {
           address: koosiBridge.address,
-          chain: network.name
+          chain: hre.network.name,
+          interface: require('../artifacts/contracts/KoosiBridge.sol/KoosiBridge.json').abi
         }
       }
     }

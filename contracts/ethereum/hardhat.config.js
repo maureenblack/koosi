@@ -1,8 +1,5 @@
 require("@nomicfoundation/hardhat-toolbox");
-require("@nomiclabs/hardhat-ethers");
-require("@nomiclabs/hardhat-etherscan");
-require("hardhat-gas-reporter");
-require("solidity-coverage");
+require("@nomicfoundation/hardhat-ethers");
 require("dotenv").config();
 
 module.exports = {
