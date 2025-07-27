@@ -1,35 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AuthService, User } from '../services/auth.service';
+import { useAuth } from '../contexts/AuthContext';
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
+  const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const token = AuthService.getToken();
-        if (token) {
-          const userData = await AuthService.getCurrentUser();
-          setUser(userData);
-        }
-      } catch (error) {
-        console.error('Failed to load user:', error);
-        AuthService.clearToken();
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadUser();
-  }, []);
 
   const handleLogout = () => {
-    AuthService.clearToken();
-    setUser(null);
+    logout();
     navigate('/');
     setIsMenuOpen(false);
   };

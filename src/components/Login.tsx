@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthService, SignupData, LoginData } from '../services/auth.service';
+import { useAuth } from '../contexts/AuthContext';
 import { GoogleLogin } from '@react-oauth/google';
 
 export const Login: React.FC = () => {
@@ -29,6 +30,8 @@ export const Login: React.FC = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const { setUser } = useAuth();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -39,7 +42,10 @@ export const Login: React.FC = () => {
         await AuthService.signup(formData);
         navigate('/signup-success');
       } else {
-        await AuthService.login(formData);
+        const { token } = await AuthService.login(formData);
+        AuthService.setToken(token);
+        const userData = await AuthService.getCurrentUser();
+        setUser(userData);
         navigate('/dashboard');
       }
     } catch (err: any) {
@@ -63,11 +69,12 @@ export const Login: React.FC = () => {
     }
   };
 
-  const handleGoogleSuccess = async (credentialResponse: any) => {
+  const handleGoogleSuccess = async (response: any) => {
     try {
-      setError('');
-      setLoading(true);
-      await AuthService.socialLogin('google', credentialResponse.credential);
+      const { token } = await AuthService.socialLogin('google', response.credential);
+      AuthService.setToken(token);
+      const userData = await AuthService.getCurrentUser();
+      setUser(userData);
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.message);

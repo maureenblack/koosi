@@ -50,11 +50,10 @@ export class AuthService {
     this.token = null;
   }
 
-  static async signup(data: SignupData): Promise<void> {
+  static async signup(data: SignupData): Promise<AuthResponse> {
     try {
       const response = await axios.post<AuthResponse>(`${API_URL}/auth/signup`, data);
-      const { token } = response.data;
-      this.setToken(token);
+      return response.data;
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Failed to sign up';
       const details = error.response?.data?.details;
@@ -65,11 +64,10 @@ export class AuthService {
     }
   }
 
-  static async login(data: LoginData): Promise<void> {
+  static async login(data: LoginData): Promise<AuthResponse> {
     try {
       const response = await axios.post<AuthResponse>(`${API_URL}/auth/login`, data);
-      const { token } = response.data;
-      this.setToken(token);
+      return response.data;
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Failed to log in';
       const details = error.response?.data?.details;
@@ -80,14 +78,13 @@ export class AuthService {
     }
   }
 
-  static async socialLogin(provider: string, token: string): Promise<void> {
+  static async socialLogin(provider: string, token: string): Promise<AuthResponse> {
     try {
       const response = await axios.post<AuthResponse>(`${API_URL}/auth/social/login`, {
         provider,
         token,
       });
-      const { token: authToken } = response.data;
-      this.setToken(authToken);
+      return response.data;
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Failed to log in';
       const details = error.response?.data?.details;

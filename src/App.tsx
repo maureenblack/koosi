@@ -1,4 +1,5 @@
 import React from 'react';
+import { AuthProvider } from './contexts/AuthContext';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import Header from './components/Header';
@@ -24,7 +25,8 @@ function App() {
   return (
     <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID || ''}>
       <Router>
-        <div className="min-h-screen bg-gradient-to-b from-[#1A0B4A] to-[#2D1B69]">
+        <AuthProvider>
+          <div className="min-h-screen bg-gradient-to-b from-[#1A0B4A] to-[#2D1B69]">
           <Header />
           <Routes>
             <Route path="/" element={<Home />} />
@@ -36,7 +38,8 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
           </Routes>
           <Footer />
-        </div>
+          </div>
+        </AuthProvider>
       </Router>
     </GoogleOAuthProvider>
   );
