@@ -68,7 +68,7 @@ model Organization {
   name          String
   type          String       // 'root', 'family', 'group', 'institution'
   description   String?
-  logo          String?
+  profilePicture String?
   website       String?
   parentOrgId   String?      // For hierarchical organizations
   parentOrg     Organization? @relation("OrgHierarchy", fields: [parentOrgId], references: [id])

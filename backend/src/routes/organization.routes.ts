@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 import { AppError } from '../utils/AppError';
 import { authenticate } from '../middleware/auth';
+import { upload } from '../middleware/upload';
 import { v4 as uuidv4 } from 'uuid';
 
 export const organizationRoutes = Router();
@@ -12,8 +13,8 @@ const createOrganizationSchema = z.object({
   name: z.string().min(1),
   type: z.enum(['root', 'family', 'group', 'institution']),
   description: z.string().optional(),
-  website: z.string().url().optional(),
   parentOrgId: z.string().optional(),
+  profilePicture: z.any().optional(), // Handle file upload separately
 });
 
 const inviteMemberSchema = z.object({
@@ -22,18 +23,43 @@ const inviteMemberSchema = z.object({
 });
 
 // Create organization
-organizationRoutes.post('/', authenticate, async (req: Request, res: Response) => {
+organizationRoutes.post('/', authenticate, upload.single('profilePicture'), async (req: Request, res: Response) => {
   try {
-    const data = createOrganizationSchema.parse(req.body);
+    // Parse form data
+    const formData = req.body;
+    const file = req.file; // Multer adds file to req.file
+
+    // Validate organization data
+    const data = createOrganizationSchema.parse({
+      name: formData.name,
+      type: formData.type,
+      description: formData.description,
+      parentOrgId: formData.parentOrgId,
+      profilePicture: file,
+    });
     const userId = req.user?.id;
     if (!userId) {
       throw new AppError('Unauthorized', 401);
     }
 
+    // Process profile picture if uploaded
+    let profilePictureUrl = undefined;
+    if (req.file) {
+      profilePictureUrl = `/uploads/${req.file.filename}`;
+    }
+
     // Create organization
+    const createData: any = {
+      name: data.name,
+      type: data.type,
+      description: data.description,
+      parentOrgId: data.parentOrgId,
+      profilePicture: profilePictureUrl,
+    };
+
     const organization = await prisma.organization.create({
       data: {
-        ...data,
+        ...createData,
         memberships: {
           create: {
             userId,

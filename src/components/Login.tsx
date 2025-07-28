@@ -24,6 +24,7 @@ export const Login: React.FC = () => {
     password: '',
     name: '',
   });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -32,9 +33,38 @@ export const Login: React.FC = () => {
 
   const { setUser } = useAuth();
 
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+
+    if (!formData.email) {
+      errors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = 'Please enter a valid email address';
+    }
+
+    if (!formData.password) {
+      errors.password = 'Password is required';
+    } else if (isSignup && formData.password.length < 6) {
+      errors.password = 'Password must be at least 6 characters';
+    }
+
+    if (isSignup && !formData.name) {
+      errors.name = 'Name is required';
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setFieldErrors({});
+
+    if (!validateForm()) {
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -97,39 +127,53 @@ export const Login: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           {isSignup && (
             <div>
-              <label className="block text-sm font-medium text-gray-700">Name</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Name <span className="text-red-500">*</span>
+              </label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className={`mt-1 block w-full rounded-md shadow-sm focus:ring-orange-500 sm:text-sm ${fieldErrors.name ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-orange-500'}`}
               />
+              {fieldErrors.name && (
+                <p className="mt-1 text-sm text-red-500">{fieldErrors.name}</p>
+              )}
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Email <span className="text-red-500">*</span>
+            </label>
             <input
               type="email"
               name="email"
-              required
               value={formData.email}
               onChange={handleInputChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className={`mt-1 block w-full rounded-md shadow-sm focus:ring-orange-500 sm:text-sm ${fieldErrors.email ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-orange-500'}`}
             />
+            {fieldErrors.email && (
+              <p className="mt-1 text-sm text-red-500">{fieldErrors.email}</p>
+            )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Password</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Password <span className="text-red-500">*</span>
+              {isSignup && <span className="text-sm text-gray-500 ml-1">(min. 6 characters)</span>}
+            </label>
             <input
               type="password"
               name="password"
-              required
               value={formData.password}
               onChange={handleInputChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className={`mt-1 block w-full rounded-md shadow-sm focus:ring-orange-500 sm:text-sm ${fieldErrors.password ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-orange-500'}`}
             />
+            {fieldErrors.password && (
+              <p className="mt-1 text-sm text-red-500">{fieldErrors.password}</p>
+            )}
           </div>
 
           <button

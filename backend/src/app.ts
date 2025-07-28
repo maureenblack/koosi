@@ -14,6 +14,7 @@ const app = express();
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static('uploads'));
 
 // Apply rate limiting to API routes
 app.use('/api', rateLimit({
