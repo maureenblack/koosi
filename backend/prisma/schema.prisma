@@ -15,17 +15,18 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
+  id            String         @id @default(uuid())
+  email         String         @unique
   password      String
   name          String?
-  githubId      String?   @unique
-  googleId      String?   @unique
-  twitterId     String?   @unique
-  walletAddress String?   @unique
+  githubId      String?        @unique
+  googleId      String?        @unique
+  twitterId     String?        @unique
+  walletAddress String?        @unique
   capsules      Capsule[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  memberships   Membership[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model Capsule {
@@ -60,4 +61,73 @@ model Recipient {
   status    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Organization {
+  id            String       @id @default(uuid())
+  name          String
+  type          String       // 'root', 'family', 'group', 'institution'
+  description   String?
+  logo          String?
+  website       String?
+  parentOrgId   String?      // For hierarchical organizations
+  parentOrg     Organization? @relation("OrgHierarchy", fields: [parentOrgId], references: [id])
+  childOrgs     Organization[] @relation("OrgHierarchy")
+  memberships   Membership[]
+  invitations   Invitation[]
+  verifications Verification[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model Role {
+  id          String       @id @default(uuid())
+  name        String       // 'creator', 'recipient', 'verifier', 'admin'
+  permissions Json
+  memberships Membership[]
+  invitations Invitation[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@unique([name])
+}
+
+model Membership {
+  id             String       @id @default(uuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  roleId         String
+  role           Role         @relation(fields: [roleId], references: [id])
+  status         String       // 'active', 'inactive', 'suspended'
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([userId, organizationId])
+}
+
+model Invitation {
+  id             String       @id @default(uuid())
+  email          String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  roleId         String
+  role           Role         @relation(fields: [roleId], references: [id])
+  token          String       @unique
+  status         String       // 'pending', 'accepted', 'expired'
+  expiresAt      DateTime
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model Verification {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  type           String       // 'domain', 'document', 'legal'
+  status         String       // 'pending', 'approved', 'rejected'
+  data           Json
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 }

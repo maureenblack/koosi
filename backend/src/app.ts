@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import { config } from './config';
 import { authRoutes } from './routes/auth.routes';
 import { userRoutes } from './routes/user.routes';
+import { organizationRoutes } from './routes/organization.routes';
 import { capsuleRoutes } from './routes/capsule.routes';
 
 const app = express();
@@ -26,6 +27,7 @@ app.use('/api', rateLimit({
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/organizations', organizationRoutes);
 app.use('/api/capsules', capsuleRoutes);
 
 // Routes
