@@ -10,6 +10,7 @@ import Pricing from './pages/Pricing';
 import { Login } from './components/Login';
 import { SignupSuccess } from './components/SignupSuccess';
 import { Dashboard } from './pages/Dashboard';
+import { Profile } from './pages/Profile';
 import Features from './components/Features';
 import './App.css';
 import './index.css';
@@ -36,6 +37,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/signup-success" element={<SignupSuccess />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/profile" element={<Profile />} />
           </Routes>
           <Footer />
           </div>
