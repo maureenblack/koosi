@@ -11,6 +11,8 @@ import { Login } from './components/Login';
 import { SignupSuccess } from './components/SignupSuccess';
 import { Dashboard } from './pages/Dashboard';
 import { Profile } from './pages/Profile';
+import { Organizations } from './pages/Organizations';
+import { CreateOrganization } from './pages/CreateOrganization';
 import Features from './components/Features';
 import './App.css';
 import './index.css';
@@ -38,6 +40,8 @@ function App() {
             <Route path="/signup-success" element={<SignupSuccess />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/profile" element={<Profile />} />
+          <Route path="/organizations" element={<Organizations />} />
+          <Route path="/organizations/new" element={<CreateOrganization />} />
           </Routes>
           <Footer />
           </div>

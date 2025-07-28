@@ -55,12 +55,22 @@ export class AuthService {
       const response = await axios.post<AuthResponse>(`${API_URL}/auth/signup`, data);
       return response.data;
     } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 'Failed to sign up';
-      const details = error.response?.data?.details;
-      if (details) {
-        throw new Error(`${errorMessage}: ${JSON.stringify(details)}`);
+      if (error.response?.status === 400) {
+        const details = error.response.data?.details;
+        if (details) {
+          const validationErrors = Object.values(details)
+            .map((detail: any) => detail._errors?.join(', '))
+            .filter(Boolean)
+            .join(', ');
+          throw new Error(validationErrors || 'Invalid input data');
+        }
+        throw new Error(error.response.data?.error || 'Invalid input data');
+      } else if (error.response?.status === 401) {
+        throw new Error('Invalid email or password');
+      } else if (error.response?.status === 409) {
+        throw new Error('Email already registered');
       }
-      throw new Error(errorMessage);
+      throw new Error('An error occurred. Please try again.');
     }
   }
 
@@ -69,12 +79,20 @@ export class AuthService {
       const response = await axios.post<AuthResponse>(`${API_URL}/auth/login`, data);
       return response.data;
     } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 'Failed to log in';
-      const details = error.response?.data?.details;
-      if (details) {
-        throw new Error(`${errorMessage}: ${JSON.stringify(details)}`);
+      if (error.response?.status === 400) {
+        const details = error.response.data?.details;
+        if (details) {
+          const validationErrors = Object.values(details)
+            .map((detail: any) => detail._errors?.join(', '))
+            .filter(Boolean)
+            .join(', ');
+          throw new Error(validationErrors || 'Invalid input data');
+        }
+        throw new Error(error.response.data?.error || 'Invalid input data');
+      } else if (error.response?.status === 401) {
+        throw new Error('Invalid email or password');
       }
-      throw new Error(errorMessage);
+      throw new Error('An error occurred. Please try again.');
     }
   }
 
@@ -86,12 +104,20 @@ export class AuthService {
       });
       return response.data;
     } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 'Failed to log in';
-      const details = error.response?.data?.details;
-      if (details) {
-        throw new Error(`${errorMessage}: ${JSON.stringify(details)}`);
+      if (error.response?.status === 400) {
+        const details = error.response.data?.details;
+        if (details) {
+          const validationErrors = Object.values(details)
+            .map((detail: any) => detail._errors?.join(', '))
+            .filter(Boolean)
+            .join(', ');
+          throw new Error(validationErrors || 'Invalid input data');
+        }
+        throw new Error(error.response.data?.error || 'Invalid input data');
+      } else if (error.response?.status === 401) {
+        throw new Error('Invalid email or password');
       }
-      throw new Error(errorMessage);
+      throw new Error('An error occurred. Please try again.');
     }
   }
 

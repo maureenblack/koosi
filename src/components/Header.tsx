@@ -95,6 +95,13 @@ const Header: React.FC = () => {
                       Dashboard
                     </Link>
                     <Link
+                      to="/organizations"
+                      className="block px-4 py-2 text-sm text-white/90 hover:text-white hover:bg-white/10"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Organizations
+                    </Link>
+                    <Link
                       to="/profile"
                       className="block px-4 py-2 text-sm text-white/90 hover:text-white hover:bg-white/10"
                       onClick={() => setIsMenuOpen(false)}
